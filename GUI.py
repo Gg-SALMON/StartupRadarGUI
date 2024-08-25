@@ -90,33 +90,38 @@ label_list = customtkinter.CTkLabel(frame1R, text="MANAGE LISTS", text_color=('#
 label_list.grid(row=0, column=0, sticky=EW, pady=(20,3), padx=25)
 
 button_create_new_list = customtkinter.CTkButton(frame1R, text="Create new list",
-                                                 command=lambda : open_window_create_new_list(window,tree), width=150,)
+                                                 command=lambda: open_window_create_new_list(window,tree), width=150,)
 button_create_new_list.grid(row=1, column=0, pady=3, padx=25)
 
 button_view_detail_list = customtkinter.CTkButton(frame1R, text="View detail list",
-                                                  command=lambda : view_list_detail(tree,window), width=150,)
+                                                  command=lambda: view_list_detail(tree,window), width=150,)
 button_view_detail_list.grid(row=2, column=0, pady=3, padx=25)
 
-button_view_delete_list = customtkinter.CTkButton(frame1R, text="Delete list",
-                                                  command=lambda : delete_list(tree), width=150,)
+button_view_delete_list = customtkinter.CTkButton(frame1R, text="Edit list",
+                                                  command=lambda: open_window_edit_list(window,tree), width=150,)
 button_view_delete_list.grid(row=3, column=0, pady=3, padx=25)
+
+
+button_view_delete_list = customtkinter.CTkButton(frame1R, text="Delete list",
+                                                  command=lambda: delete_list(tree), width=150,)
+button_view_delete_list.grid(row=4, column=0, pady=3, padx=25)
 
 # Generate CSV buttons
 label_csv = customtkinter.CTkLabel(frame1R, text="GENERATE CSV", text_color=('#062557','#ffffff'),
                                     font=("Calibri", 19, 'bold', 'roman', 'underline'), height=10, width=150, justify='center')
-label_csv.grid(row=4, column=0, sticky=EW,  padx=25, pady=(25,3))
+label_csv.grid(row=5, column=0, sticky=EW,  padx=25, pady=(25,3))
 
 
 button_create_csv = customtkinter.CTkButton(frame1R, text="Existing list",
                                             command=lambda: create_csv_created_list(tree), width=150,)
-button_create_csv.grid(row=5, column=0, pady=3, padx=25)
+button_create_csv.grid(row=6, column=0, pady=3, padx=25)
 
 button_create_csv_recommendation = customtkinter.CTkButton(frame1R, text="Recommendation",
                                                            command=lambda: create_csv_recommendation(tree), width=150,)
-button_create_csv_recommendation.grid(row=6, column=0, pady=3, padx=25)
+button_create_csv_recommendation.grid(row=7, column=0, pady=3, padx=25)
 
 button_quit = customtkinter.CTkButton(frame1R, text="Quit", command=lambda: quit_window(window),  width=150, )
-button_quit.grid(row=7, column=0, pady=(100,3), sticky='s', padx=25)
+button_quit.grid(row=8, column=0, pady=(60,3), sticky='s', padx=25)
 
 
 window.mainloop()

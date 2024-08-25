@@ -273,6 +273,87 @@ def create_new_list(entry_name, entry_description, tree, window):
     window.destroy()
 
 
+def open_window_edit_list(window, tree):
+    """
+        Opens a window for editing an existing list.
+
+        Args:
+            window (Tk): The main application window.
+            tree (ttk.Treeview): Treeview widget containing the list selections.
+            """
+
+    list_selected_slug = export_selection(tree)
+
+    if len(list_selected_slug) != 1:
+        messagebox.showwarning(title="Selection error", message="Please select one and only one list")
+    else :
+
+        edit_list_window = customtkinter.CTkToplevel(window)
+        edit_list_window.title(f"Edit the list {list_selected_slug[0][0]} - {list_selected_slug[0][1]}")
+        edit_list_window.geometry('600x320')
+        edit_list_window.resizable(width=False, height=False)
+        edit_list_window.configure(padx=1, pady=1)
+        edit_list_window.transient()  # place this window on top of the root window
+        edit_list_window.grab_set()
+
+        customtkinter.CTkLabel(edit_list_window, text="Edit Name", text_color=('#062557', '#ffffff'),
+                               font=("Calibri", 14,), height=10, )\
+            .grid(row=0, column=0, sticky=W, padx=10, pady=2, columnspan=2)
+        entry_name = customtkinter.CTkEntry(edit_list_window, placeholder_text="Enter a name for your list", width=590)
+        entry_name.grid(row=1, column=0, sticky=EW, columnspan=2, pady=(2,10), padx=3)
+
+        customtkinter.CTkLabel(edit_list_window, text="Edit Description", text_color=('#062557', '#ffffff'),
+                               font=("Calibri", 14,), height=10, ).grid(row=2, column=0, sticky=W, padx=10,
+                                    pady=2, columnspan=2, )
+        entry_description = customtkinter.CTkTextbox(edit_list_window, width=590, height=180)
+        entry_description.grid(row=3, column=0, sticky=EW, columnspan=2, pady=(2,10), padx=3)
+
+        button_create = customtkinter.CTkButton(edit_list_window, text="Edit",
+                                                command=lambda: edit_list(entry_name,
+                                                                                entry_description,
+                                                                                tree,
+                                                                                edit_list_window), width=100)
+        button_create.grid(row=4, column=0, sticky=W, padx=2)
+
+        button_quit = customtkinter.CTkButton(edit_list_window, text="Close",
+                                              command=lambda: quit_window(edit_list_window), width=100)
+        button_quit.grid(row=4, column=1, sticky=E, )
+
+
+def edit_list(entry_name, entry_description, tree, window):
+    """
+        Creates a new list using the provided name and description.
+
+        Args:
+            entry_name (CTkEntry): Entry widget containing the list name.
+            entry_description (CTkTextbox): Textbox widget containing the list description.
+            tree (ttk.Treeview): Treeview widget containing the list selections.
+            window (Tk): The edit_list window application window.
+        """
+    name = entry_name.get()
+    description = entry_description.get("1.0", "end-1c")
+    slug = export_selection(tree)[0][0]
+    if not name:
+        messagebox.showwarning(title="Missing domain", message="Please enter a valid domain")
+        return
+    if not description:
+        messagebox.showwarning(title="Missing description", message="Please enter a description")
+        return
+
+
+    data = {"name": name,
+            "description": description
+            }
+    response = requests.put(url_base + f"lists/{slug}", headers=HEADERS, json=data)
+
+    messagebox.showinfo(title="List created",
+                        message=f"New list created \n Name :{name} \n Description : {description[:30]}")
+
+    refresh_main_tree(tree)
+    window.destroy()
+
+
+
 def refresh_main_tree(tree):
     for i in tree.get_children():
         tree.delete(i)
@@ -293,7 +374,7 @@ def view_list_detail(tree, window):
     global df_view
 
     list_selected_slug = export_selection(tree)
-    print(list_selected_slug)
+
     if len(list_selected_slug) != 1:
         messagebox.showwarning(title="Selection error", message="Please select one and only one list")
     else:
