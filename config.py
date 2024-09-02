@@ -3,7 +3,7 @@
 
 
 # API key for accessing the StartupRadar API
-API_KEY = "Your API-KEY"
+API_KEY = "Your StartUp Radar API key"
 
 # Set up common headers for API requests
 HEADERS = {

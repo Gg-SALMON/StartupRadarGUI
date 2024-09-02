@@ -7,6 +7,26 @@ from tkinter import *
 import os
 from pathlib import Path
 from config import *
+from datetime import datetime
+
+
+def get_saved_path():
+    """
+        Get a previous saved path from a txt file or create a new txt file for a first use.
+
+        Returns:
+            str: path to save the data
+        """
+    if os.path.isfile("saved_path.txt"):
+        with open("saved_path.txt", "r") as path_file:
+            saved_path = path_file.read()
+
+    else:
+        with open("saved_path.txt", "w") as path_file:
+            path_file.write(os.getcwd())
+        saved_path = os.getcwd()
+    return saved_path
+
 
 
 def create_data_frame_all_existing_lists():
@@ -24,10 +44,10 @@ def create_data_frame_all_existing_lists():
     df = pd.DataFrame(df_l)
     df.columns = ['id', 'name', 'description', 'created_at', 'updated_at']
     df.set_index(['id'])
-    # df.created_at = (df.created_at.apply(lambda x: x.split('T')[0]))
-    # df.created_at = pd.to_datetime(df.created_at)
-    # df.updated_at = (df.updated_at.apply(lambda x: x.split('T')[0]))
-    # df.updated_at = pd.to_datetime(df.updated_at)
+    df.created_at = (df.created_at.apply(lambda x: (x.replace('T', '   '))[0:-7]))
+
+    df.updated_at = (df.updated_at.apply(lambda x: (x.replace('T', '   '))[0:-7]))
+
     return df
 
 
@@ -39,7 +59,7 @@ df_existing_list = create_data_frame_all_existing_lists()
 list_of_slug = df_existing_list.id.values.tolist()
 
 # Default path for saving files
-default_path = os.getcwd()
+default_path = get_saved_path()
 
 
 def get_slug_list():
@@ -176,9 +196,62 @@ def create_csv_recommendation(tree):
     if list_slug:
         for slug in list_slug:
             df = create_data_frame_recommendation(slug)
-            df.to_csv(Path(path,f"{slug}_recommendation.csv"), index=False)
+            df.to_csv(Path(path, f"{slug}_recommendation.csv"), index=False)
     else:
         messagebox.showwarning(title="No selection", message="Please select at least one list")
+
+
+def history_recommendation(tree):
+    """
+       Creates CSV files for selected list recommendations and saves them to the selected directory.
+
+       Args:
+           tree (ttk.Treeview): Treeview widget containing the list selections.
+       """
+    path = Path(select_directory())
+    today = datetime.today().strftime('%Y-%m-%d')
+
+    new = []
+    for selection in export_selection(tree):
+        new.extend(follow_history(selection, path))
+
+    df_new = pd.DataFrame(new, columns=['slug', 'name', 'domain', 'priority'])
+    df_new.to_csv(Path(path, f"new_recommendation_{today}_.csv", index=False))
+
+
+def follow_history(selection, path):
+    slug = selection[0]
+    name = selection[1]
+
+    folder = f"{selection[0]}_{selection[1]}"
+    today = datetime.today().strftime('%Y-%m-%d')
+    output_dir = Path(path, folder)
+    output_dir.mkdir(exist_ok=True)
+
+    df_r = create_data_frame_recommendation(slug)
+    df_r.to_csv(Path(output_dir, f"{slug}_recommendation.csv", index=False))
+    if os.path.isfile(Path(output_dir, f"{slug}_recommendation_history.csv")):
+        df_h = pd.read_csv(Path(output_dir, f"{slug}_recommendation_history.csv"))
+        if today in df_h.columns:
+            df_h.insert(0, 'name', name)
+            df_h.insert(0, 'slug', slug)
+            return df_h[df_h[df_h.columns[-2]].isna()][['slug', 'name', 'domain', today]].values.tolist()
+        df_r = df_r.rename(columns={'priority': today})
+        df_merged = df_h.merge(df_r, how='outer', on='domain')
+
+        new_domain_df = df_merged[df_merged[df_merged.columns[-2]].isna()][['domain', today]]
+        new_domain_df.insert(0, 'name', name)
+        new_domain_df.insert(0, 'slug', slug)
+
+        df_merged.to_csv(Path(output_dir, f"{slug}_recommendation_history.csv", index=False))
+        df_r.to_csv(Path(output_dir, f"{slug}_recommendation.csv", index=False))
+        return new_domain_df.values.tolist()
+    else:
+        df_r.columns = ['domain', today]
+        df_r.to_csv(Path(output_dir, f"{slug}_recommendation_history.csv", index=False))
+        df_r.insert(0, 'name', name)
+        df_r.insert(0, 'slug', slug)
+        return df_r.values.tolist()
 
 
 def export_selection(tree):
@@ -237,7 +310,7 @@ def open_window_create_new_list(window, tree):
                                                                             create_new_list_window), width=100)
     button_create.grid(row=4, column=0, sticky=W, padx=2)
 
-    button_quit = customtkinter.CTkButton(create_new_list, text="Close",
+    button_quit = customtkinter.CTkButton(create_new_list_window, text="Close",
                                           command=lambda: quit_window(create_new_list_window), width=100)
     button_quit.grid(row=4, column=1, sticky=E, )
 
@@ -301,12 +374,14 @@ def open_window_edit_list(window, tree):
             .grid(row=0, column=0, sticky=W, padx=10, pady=2, columnspan=2)
         entry_name = customtkinter.CTkEntry(edit_list_window, placeholder_text="Enter a name for your list", width=590)
         entry_name.grid(row=1, column=0, sticky=EW, columnspan=2, pady=(2,10), padx=3)
+        entry_name.insert(0, list_selected_slug[0][1])
 
         customtkinter.CTkLabel(edit_list_window, text="Edit Description", text_color=('#062557', '#ffffff'),
                                font=("Calibri", 14,), height=10, ).grid(row=2, column=0, sticky=W, padx=10,
                                     pady=2, columnspan=2, )
         entry_description = customtkinter.CTkTextbox(edit_list_window, width=590, height=180)
         entry_description.grid(row=3, column=0, sticky=EW, columnspan=2, pady=(2,10), padx=3)
+        entry_description.insert(END, list_selected_slug[0][2])
 
         button_create = customtkinter.CTkButton(edit_list_window, text="Edit",
                                                 command=lambda: edit_list(entry_name,
@@ -380,36 +455,41 @@ def view_list_detail(tree, window):
     else:
         data_window = customtkinter.CTkToplevel(window)
         data_window.title("Data preview")
-        data_window.geometry('760x420')
+        data_window.geometry('760x360')
         data_window.resizable(width=False, height=False)
         data_window.configure(padx=1, pady=1)
         data_window.transient()  # place this window on top of the root window
         data_window.grab_set()
 
         # Create two frames, left for tree and right for buttons
-        frame_left_d = customtkinter.CTkFrame(data_window, width=550, height=400)
+        frame_left_d = customtkinter.CTkFrame(data_window, width=550, height=350)
         frame_left_d.grid_propagate(False)
         frame_left_d.grid(row=1, column=0, pady=3)
 
-        frame_right_d = customtkinter.CTkFrame(data_window, width=199, height=400)
+        frame_right_d = customtkinter.CTkFrame(data_window, width=199, height=350)
         frame_right_d.grid_propagate(False)
         frame_right_d.grid(row=1, column=1, pady=3)
 
         # Left frame content
         #       Headings with list information
-        customtkinter.CTkLabel(frame_left_d, text=f"slug : {list_selected_slug[0][0]}",
+        customtkinter.CTkLabel(frame_left_d, text=f"{list_selected_slug[0][0]} - {list_selected_slug[0][1]}",
                                text_color=('#062557', '#ffffff'),
-                               font=("Calibri", 14, 'bold', 'roman', ), height=10, width=550,
-                               justify='left', anchor=W).grid(row=0, column=0, padx=20, pady=3, sticky=W)
+                               font=("Calibri", 16, 'bold', ), height=10, width=550,
+                               justify='center', anchor="center").grid(row=0, column=0, padx=20, pady=3, sticky=EW)
 
-        customtkinter.CTkLabel(frame_left_d, text=f"Name : {list_selected_slug[0][1]}",
+        customtkinter.CTkLabel(frame_left_d, text=f"Description",
                                text_color=('#062557', '#ffffff'),
-                               font=("Calibri", 14, 'bold', 'roman', ), height=10, width=550,
-                               justify='left', anchor=W).grid(row=1, column=0, padx=20, pady=3, sticky=W)
+                               font=("Calibri", 14, 'bold', 'roman',), height=10, width=550,
+                               justify='left', anchor=W).grid(row=1, column=0, padx=20, pady=3, sticky=EW)
+
+        description_box = customtkinter.CTkTextbox(frame_left_d, width=530, height=60)
+        description_box.grid(row=2, column=0, pady=3, padx=20, sticky=W)
+        description_box.insert(END, list_selected_slug[0][2])
+        description_box.configure(state="disabled")
 
         #       Create Tree for list details
         frame_tree = customtkinter.CTkScrollableFrame(frame_left_d, width=550, height=200)
-        frame_tree.grid(row=2, column=0, pady=3)
+        frame_tree.grid(row=3, column=0, pady=3)
 
         #       Configure tree style
         style = ttk.Style()
@@ -455,7 +535,7 @@ def view_list_detail(tree, window):
                                                    command=lambda: open_window_add_new_entry(data_window,
                                                                                              list_selected_slug[0][0]),
                                                    width=150, )
-        button_add_entry.grid(row=0, column=0, pady=(25, 3), padx=25)
+        button_add_entry.grid(row=0, column=0, pady=(3, 3), padx=25)
         # Edit Entry
         button_edit_entry = customtkinter.CTkButton(frame_right_d, text="Edit entry",
                                                     command=lambda: open_window_edit_entry(list_selected_slug[0][0],
@@ -475,7 +555,7 @@ def view_list_detail(tree, window):
         # Close window
         button_quit_tree = customtkinter.CTkButton(frame_right_d, text="Close window",
                                                    command=lambda: quit_window(data_window), width=150, )
-        button_quit_tree.grid(row=4, column=0, pady=(20, 3), padx=25)
+        button_quit_tree.grid(row=4, column=0, pady=(150, 3), padx=25)
 
 
 def open_window_add_new_entry(window, slug):
@@ -731,6 +811,8 @@ def select_directory():
     global default_path
     folder_selected = filedialog.askdirectory(title="Choose directory", initialdir=default_path)
     default_path = folder_selected
+    with open("saved_path.txt", "w") as saved_path_file:
+        saved_path_file.write(default_path)
     return folder_selected
 
 

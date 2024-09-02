@@ -14,7 +14,7 @@ window = customtkinter.CTk()
 
 window.title("Startup Radar Interface")
 #window.iconbitmap("Add your icon")
-window.geometry('1200x445')
+window.geometry('1200x405')
 window.resizable(width=False, height=False)
 window.configure(padx=1, pady=1)
 
@@ -44,7 +44,7 @@ label_list.grid(row=0, column=0, sticky=EW, )
 
 
 ############## TREE CONSTRUCTION
-frame_tree=customtkinter.CTkScrollableFrame(frame1L,  height=350, width=1000)
+frame_tree = customtkinter.CTkScrollableFrame(frame1L,  height=350, width=1000)
 frame_tree.grid(row=1, column=0, sticky=EW, pady=3)
 
 # Configure tree style
@@ -67,17 +67,17 @@ tree.tag_configure('evenrow', background='#E8F5FF')
 tree.pack()
 # Formate columns
 tree.column("#0", width=0, stretch=NO)
-cols=list(df_existing_list.columns)
+cols = list(df_existing_list.columns)
 tree["columns"] = cols
 for i in cols:
     tree.column(i, anchor="w", width=250)
     tree.heading(i, text=i, anchor='w')
 
-tree.column("id", width=60, stretch=NO)
+tree.column("id", width=40, stretch=NO)
 tree.column("name", width=240, stretch=NO)
-tree.column("description", width=660, stretch=NO)
-tree.column("created_at", width=120, stretch=NO)
-tree.column("updated_at", width=120, stretch=NO)
+tree.column("description", width=620, stretch=NO)
+tree.column("created_at", width=150, stretch=NO)
+tree.column("updated_at", width=150, stretch=NO)
 
 for i, row in df_existing_list.iterrows():
     tag_name = 'oddrow' if i % 2 == 0 else 'evenrow'
@@ -86,7 +86,7 @@ for i, row in df_existing_list.iterrows():
 
 # Manage lists buttons
 label_list = customtkinter.CTkLabel(frame1R, text="MANAGE LISTS", text_color=('#062557','#ffffff'),
-                                    font=("Calibri", 19, 'bold', 'roman', 'underline'), height=10, width=150, justify='center')
+                                    font=("Calibri", 17, 'bold', 'roman', 'underline'), height=10, width=150, justify='center')
 label_list.grid(row=0, column=0, sticky=EW, pady=(20,3), padx=25)
 
 button_create_new_list = customtkinter.CTkButton(frame1R, text="Create new list",
@@ -108,8 +108,8 @@ button_view_delete_list.grid(row=4, column=0, pady=3, padx=25)
 
 # Generate CSV buttons
 label_csv = customtkinter.CTkLabel(frame1R, text="GENERATE CSV", text_color=('#062557','#ffffff'),
-                                    font=("Calibri", 19, 'bold', 'roman', 'underline'), height=10, width=150, justify='center')
-label_csv.grid(row=5, column=0, sticky=EW,  padx=25, pady=(25,3))
+                                    font=("Calibri", 17, 'bold', 'roman', 'underline'), height=10, width=150, justify='center')
+label_csv.grid(row=5, column=0, sticky=EW,  padx=25, pady=(20,3))
 
 
 button_create_csv = customtkinter.CTkButton(frame1R, text="Existing list",
@@ -120,8 +120,12 @@ button_create_csv_recommendation = customtkinter.CTkButton(frame1R, text="Recomm
                                                            command=lambda: create_csv_recommendation(tree), width=150,)
 button_create_csv_recommendation.grid(row=7, column=0, pady=3, padx=25)
 
+button_create_csv_recommendation = customtkinter.CTkButton(frame1R, text="What's new?",
+                                                           command=lambda: history_recommendation(tree), width=150,)
+button_create_csv_recommendation.grid(row=8, column=0, pady=3, padx=25)
+
 button_quit = customtkinter.CTkButton(frame1R, text="Quit", command=lambda: quit_window(window),  width=150, )
-button_quit.grid(row=8, column=0, pady=(60,3), sticky='s', padx=25)
+button_quit.grid(row=9, column=0, pady=(30,3), sticky='s', padx=25)
 
 
 window.mainloop()
