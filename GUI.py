@@ -120,9 +120,9 @@ button_create_csv_recommendation = customtkinter.CTkButton(frame1R, text="Recomm
                                                            command=lambda: create_csv_recommendation(tree), width=150,)
 button_create_csv_recommendation.grid(row=7, column=0, pady=3, padx=25)
 
-button_create_csv_recommendation = customtkinter.CTkButton(frame1R, text="What's new?",
+button_create_csv_news = customtkinter.CTkButton(frame1R, text="What's new?",
                                                            command=lambda: history_recommendation(tree), width=150,)
-button_create_csv_recommendation.grid(row=8, column=0, pady=3, padx=25)
+button_create_csv_news.grid(row=8, column=0, pady=3, padx=25)
 
 button_quit = customtkinter.CTkButton(frame1R, text="Quit", command=lambda: quit_window(window),  width=150, )
 button_quit.grid(row=9, column=0, pady=(30,3), sticky='s', padx=25)
